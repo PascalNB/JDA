@@ -1158,7 +1158,7 @@ public class GuildImpl implements Guild
     public CacheRestAction<GuildVoiceState> retrieveMemberVoiceState(@Nonnull UserSnowflake user)
     {
         JDAImpl jda = getJDA();
-        Member member = getMember(user);
+        MemberImpl member = (MemberImpl) getMember(user);
         return new DeferredRestAction<>(jda, GuildVoiceState.class,
                 () -> member == null ? null : member.getVoiceState(),
                 () -> {
@@ -1166,12 +1166,14 @@ public class GuildImpl implements Guild
                     return new RestActionImpl<>(jda, route, (resp, req) -> {
                         EntityBuilder entityBuilder = jda.getEntityBuilder();
                         DataObject voiceStateData = resp.getObject();
-                        MemberImpl newMember = entityBuilder.createMember(this, voiceStateData.getObject("member"), voiceStateData, null);
-                        entityBuilder.updateMemberCache(newMember);
+                        MemberImpl newMember = member;
+                        if (newMember == null)
+                        {
+                            newMember = entityBuilder.createMember(this, voiceStateData.getObject("member"), voiceStateData, null);
+                            entityBuilder.updateMemberCache(newMember);
+                        }
                         GuildVoiceState voiceState = newMember.getVoiceState();
-                        if (voiceState != null)
-                            return voiceState;
-                        return entityBuilder.createGuildVoiceState(newMember, voiceStateData);
+                        return voiceState == null ? entityBuilder.createGuildVoiceState(newMember, voiceStateData) : voiceState;
                     });
                 }).useCache(jda.isIntent(GatewayIntent.GUILD_MEMBERS) && jda.isIntent(GatewayIntent.GUILD_VOICE_STATES));
     }
