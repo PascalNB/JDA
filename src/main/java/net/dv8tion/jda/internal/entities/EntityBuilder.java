@@ -658,7 +658,7 @@ public class EntityBuilder
 
         // Load voice state and presence if necessary
         if (voiceStateJson != null && member.getVoiceState() != null)
-            updateCachedVoiceState(voiceStateJson, member);
+            createGuildVoiceState(member, voiceStateJson);
         if (presence != null)
             createPresence(member, presence);
         return member;
@@ -668,16 +668,11 @@ public class EntityBuilder
         GuildVoiceStateImpl voiceState = (GuildVoiceStateImpl) member.getVoiceState();
         if (voiceState == null)
             voiceState = new GuildVoiceStateImpl(member);
-        updateVoiceState(voiceState, voiceStateJson, member);
+        updateGuildVoiceState(voiceState, voiceStateJson, member);
         return voiceState;
     }
 
-    private void updateCachedVoiceState(DataObject voiceStateJson, MemberImpl member) {
-        GuildVoiceStateImpl voiceState = (GuildVoiceStateImpl) member.getVoiceState();
-        updateVoiceState(voiceState, voiceStateJson, member);
-    }
-
-    private void updateVoiceState(GuildVoiceStateImpl oldVoiceState, DataObject newVoiceStateJson, MemberImpl member)
+    private void updateGuildVoiceState(GuildVoiceStateImpl oldVoiceState, DataObject newVoiceStateJson, MemberImpl member)
     {
         Guild guild = member.getGuild();
 
