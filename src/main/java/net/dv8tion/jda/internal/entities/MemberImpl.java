@@ -443,8 +443,6 @@ public class MemberImpl implements Member
         return this;
     }
 
-
-
     public Set<Role> getRoleSet()
     {
         return roles;
