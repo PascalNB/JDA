@@ -82,6 +82,7 @@ import net.dv8tion.jda.internal.utils.cache.*;
 import net.dv8tion.jda.internal.utils.concurrent.task.GatewayTask;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.CheckReturnValue;
 import javax.annotation.Nonnull;
@@ -1151,6 +1152,29 @@ public class GuildImpl implements Guild
                 .map(Member::getVoiceState)
                 .filter(Objects::nonNull)
                 .collect(Helpers.toUnmodifiableList());
+    }
+
+    @Nonnull
+    @Override
+    public CacheRestAction<GuildVoiceState> retrieveMemberVoiceState(@NotNull UserSnowflake user)
+    {
+        JDAImpl jda = getJDA();
+        Member member = getMember(user);
+        return new DeferredRestAction<>(jda, GuildVoiceState.class,
+                () -> member == null ? null : member.getVoiceState(),
+                () -> {
+                    Route.CompiledRoute route = Route.Guilds.GET_VOICE_STATE.compile(getId(), user.getId());
+                    return new RestActionImpl<>(jda, route, (resp, req) -> {
+                        EntityBuilder entityBuilder = jda.getEntityBuilder();
+                        DataObject voiceStateData = resp.getObject();
+                        MemberImpl newMember = entityBuilder.createMember(this, voiceStateData.getObject("member"), voiceStateData, null);
+                        entityBuilder.updateMemberCache(newMember);
+                        GuildVoiceState voiceState = newMember.getVoiceState();
+                        if (voiceState != null)
+                            return voiceState;
+                        return entityBuilder.createGuildVoiceState(newMember, voiceStateData);
+                    });
+                }).useCache(jda.isIntent(GatewayIntent.GUILD_MEMBERS) && jda.isIntent(GatewayIntent.GUILD_VOICE_STATES));
     }
 
     @Nonnull
