@@ -82,7 +82,6 @@ import net.dv8tion.jda.internal.utils.cache.*;
 import net.dv8tion.jda.internal.utils.concurrent.task.GatewayTask;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.CheckReturnValue;
 import javax.annotation.Nonnull;
@@ -1156,7 +1155,7 @@ public class GuildImpl implements Guild
 
     @Nonnull
     @Override
-    public CacheRestAction<GuildVoiceState> retrieveMemberVoiceState(@NotNull UserSnowflake user)
+    public CacheRestAction<GuildVoiceState> retrieveMemberVoiceState(@Nonnull UserSnowflake user)
     {
         JDAImpl jda = getJDA();
         Member member = getMember(user);
