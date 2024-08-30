@@ -1158,22 +1158,29 @@ public class GuildImpl implements Guild
     public CacheRestAction<GuildVoiceState> retrieveMemberVoiceState(@Nonnull UserSnowflake user)
     {
         JDAImpl jda = getJDA();
-        MemberImpl member = (MemberImpl) getMember(user);
+
         return new DeferredRestAction<>(jda, GuildVoiceState.class,
-                () -> member == null ? null : member.getVoiceState(),
+                () -> {
+                    MemberImpl member = (MemberImpl) getMember(user);
+                    return member == null ? null : member.getVoiceState();
+                },
                 () -> {
                     Route.CompiledRoute route = Route.Guilds.GET_VOICE_STATE.compile(getId(), user.getId());
-                    return new RestActionImpl<>(jda, route, (resp, req) -> {
+
+                    return new RestActionImpl<>(jda, route, (response, request) -> {
                         EntityBuilder entityBuilder = jda.getEntityBuilder();
-                        DataObject voiceStateData = resp.getObject();
-                        MemberImpl newMember = member;
-                        if (newMember == null)
+                        DataObject voiceStateData = response.getObject();
+
+                        MemberImpl member = (MemberImpl) getMember(user);
+                        if (member == null)
                         {
-                            newMember = entityBuilder.createMember(this, voiceStateData.getObject("member"), voiceStateData, null);
-                            entityBuilder.updateMemberCache(newMember);
+                            //Creates voice state if VOICE_STATE cache flag is set
+                            member = entityBuilder.createMember(this, voiceStateData.getObject("member"), voiceStateData, null);
+                            entityBuilder.updateMemberCache(member);
                         }
-                        GuildVoiceState voiceState = newMember.getVoiceState();
-                        return voiceState == null ? entityBuilder.createGuildVoiceState(newMember, voiceStateData) : voiceState;
+                        //Can be nonnull if cache is on but useCache(false) is used
+                        GuildVoiceState voiceState = member.getVoiceState();
+                        return voiceState == null ? entityBuilder.createGuildVoiceState(member, voiceStateData) : voiceState;
                     });
                 }).useCache(jda.isIntent(GatewayIntent.GUILD_MEMBERS) && jda.isIntent(GatewayIntent.GUILD_VOICE_STATES));
     }
