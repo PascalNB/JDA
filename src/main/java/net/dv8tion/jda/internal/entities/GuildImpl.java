@@ -1155,6 +1155,31 @@ public class GuildImpl implements Guild
 
     @Nonnull
     @Override
+    public CacheRestAction<GuildVoiceState> retrieveMemberVoiceState(@Nonnull UserSnowflake user)
+    {
+        JDAImpl jda = getJDA();
+        MemberImpl member = (MemberImpl) getMember(user);
+        return new DeferredRestAction<>(jda, GuildVoiceState.class,
+                () -> member == null ? null : member.getVoiceState(),
+                () -> {
+                    Route.CompiledRoute route = Route.Guilds.GET_VOICE_STATE.compile(getId(), user.getId());
+                    return new RestActionImpl<>(jda, route, (resp, req) -> {
+                        EntityBuilder entityBuilder = jda.getEntityBuilder();
+                        DataObject voiceStateData = resp.getObject();
+                        MemberImpl newMember = member;
+                        if (newMember == null)
+                        {
+                            newMember = entityBuilder.createMember(this, voiceStateData.getObject("member"), voiceStateData, null);
+                            entityBuilder.updateMemberCache(newMember);
+                        }
+                        GuildVoiceState voiceState = newMember.getVoiceState();
+                        return voiceState == null ? entityBuilder.createGuildVoiceState(newMember, voiceStateData) : voiceState;
+                    });
+                }).useCache(jda.isIntent(GatewayIntent.GUILD_MEMBERS) && jda.isIntent(GatewayIntent.GUILD_VOICE_STATES));
+    }
+
+    @Nonnull
+    @Override
     public VerificationLevel getVerificationLevel()
     {
         return verificationLevel;

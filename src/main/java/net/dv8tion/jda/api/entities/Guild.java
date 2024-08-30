@@ -2584,6 +2584,9 @@ public interface Guild extends IGuildChannelContainer<GuildChannel>, ISnowflake
     @Nonnull
     List<GuildVoiceState> getVoiceStates();
 
+    @Nonnull
+    RestAction<GuildVoiceState> retrieveMemberVoiceState(@Nonnull UserSnowflake user);
+
     /**
      * Returns the verification-Level of this Guild. Verification level is one of the factors that determines if a Member
      * can send messages in a Guild.
