@@ -179,7 +179,8 @@ public class GuildImpl implements Guild
         try (UnlockHook hook = userView.writeLock())
         {
             long selfId = getJDA().getSelfUser().getIdLong();
-            memberIds.forEach(memberId -> {
+            memberIds.forEach(memberId ->
+            {
                 if (memberId == selfId)
                     return true; // don't remove selfUser from cache
                 userView.remove(memberId);
@@ -288,9 +289,11 @@ public class GuildImpl implements Guild
     public RestAction<PrivilegeConfig> retrieveCommandPrivileges()
     {
         Route.CompiledRoute route = Route.Interactions.GET_ALL_COMMAND_PERMISSIONS.compile(getJDA().getSelfUser().getApplicationId(), getId());
-        return new RestActionImpl<>(getJDA(), route, (response, request) -> {
+        return new RestActionImpl<>(getJDA(), route, (response, request) ->
+        {
             Map<String, List<IntegrationPrivilege>> privileges = new HashMap<>();
-            response.getArray().stream(DataArray::getObject).forEach(obj -> {
+            response.getArray().stream(DataArray::getObject).forEach(obj ->
+            {
                 String id = obj.getString("id");
                 List<IntegrationPrivilege> list = Collections.unmodifiableList(parsePrivilegesList(obj));
                 privileges.put(id, list);
@@ -492,7 +495,7 @@ public class GuildImpl implements Guild
         JDAImpl api = getJDA();
         Route.CompiledRoute route = Route.Guilds.GET_VANITY_URL.compile(getId());
         return new RestActionImpl<>(api, route,
-            (response, request) -> new VanityInvite(vanityCode, response.getObject().getInt("uses")));
+                (response, request) -> new VanityInvite(vanityCode, response.getObject().getInt("uses")));
     }
 
     @Nullable
@@ -535,9 +538,9 @@ public class GuildImpl implements Guild
     public List<Member> getBoosters()
     {
         return memberCache.applyStream((members) ->
-            members.filter(m -> m.getTimeBoosted() != null)
-                   .sorted(Comparator.comparing(Member::getTimeBoosted))
-                   .collect(Helpers.toUnmodifiableList()));
+                members.filter(m -> m.getTimeBoosted() != null)
+                        .sorted(Comparator.comparing(Member::getTimeBoosted))
+                        .collect(Helpers.toUnmodifiableList()));
     }
 
     @Override
@@ -558,7 +561,8 @@ public class GuildImpl implements Guild
     {
         Route.CompiledRoute route = Route.Guilds.GET_GUILD.compile(getId());
         route = route.withQueryParams("with_counts", "true");
-        return new RestActionImpl<>(getJDA(), route, (response, request) -> {
+        return new RestActionImpl<>(getJDA(), route, (response, request) ->
+        {
             DataObject json = response.getObject();
             int memberLimit = json.getInt("max_members", 0);
             int presenceLimit = json.getInt("max_presences", 5000);
@@ -823,9 +827,9 @@ public class GuildImpl implements Guild
         if (includeHidden)
         {
             return channelCache.applyStream(stream ->
-                stream.filter(it -> !it.getType().isThread())
-                      .sorted()
-                      .collect(Helpers.toUnmodifiableList())
+                    stream.filter(it -> !it.getType().isThread())
+                            .sorted()
+                            .collect(Helpers.toUnmodifiableList())
             );
         }
 
@@ -888,15 +892,17 @@ public class GuildImpl implements Guild
 
         JDAImpl jda = getJDA();
         return new DeferredRestAction<>(jda, RichCustomEmoji.class,
-        () -> {
-            RichCustomEmoji emoji = getEmojiById(id);
-            if (emoji != null)
-            {
-                if (emoji.getOwner() != null || !getSelfMember().hasPermission(Permission.MANAGE_GUILD_EXPRESSIONS))
-                    return emoji;
-            }
-            return null;
-        }, () -> {
+                () ->
+                {
+                    RichCustomEmoji emoji = getEmojiById(id);
+                    if (emoji != null)
+                    {
+                        if (emoji.getOwner() != null || !getSelfMember().hasPermission(Permission.MANAGE_GUILD_EXPRESSIONS))
+                            return emoji;
+                    }
+                    return null;
+                }, () ->
+        {
             Route.CompiledRoute route = Route.Emojis.GET_EMOJI.compile(getId(), id);
             return new AuditableRestActionImpl<>(jda, route, (response, request) ->
             {
@@ -911,7 +917,8 @@ public class GuildImpl implements Guild
     public RestAction<List<GuildSticker>> retrieveStickers()
     {
         Route.CompiledRoute route = Route.Stickers.GET_GUILD_STICKERS.compile(getId());
-        return new RestActionImpl<>(getJDA(), route, (response, request) -> {
+        return new RestActionImpl<>(getJDA(), route, (response, request) ->
+        {
             DataArray array = response.getArray();
             List<GuildSticker> stickers = new ArrayList<>(array.length());
             EntityBuilder builder = api.getEntityBuilder();
@@ -940,7 +947,8 @@ public class GuildImpl implements Guild
     {
         Checks.notNull(sticker, "Sticker");
         Route.CompiledRoute route = Route.Stickers.GET_GUILD_STICKER.compile(getId(), sticker.getId());
-        return new RestActionImpl<>(getJDA(), route, (response, request) -> {
+        return new RestActionImpl<>(getJDA(), route, (response, request) ->
+        {
             DataObject object = response.getObject();
             EntityBuilder builder = api.getEntityBuilder();
             return (GuildSticker) builder.createRichSticker(object);
@@ -1133,7 +1141,9 @@ public class GuildImpl implements Guild
             return new GatewayTask<>(future, () -> future.cancel(false));
         }
 
-        return new GatewayTask<>(CompletableFuture.completedFuture(null), () -> {});
+        return new GatewayTask<>(CompletableFuture.completedFuture(null), () ->
+        {
+        });
     }
 
     @Nonnull
@@ -1158,29 +1168,23 @@ public class GuildImpl implements Guild
     public CacheRestAction<GuildVoiceState> retrieveMemberVoiceState(@Nonnull UserSnowflake user)
     {
         JDAImpl jda = getJDA();
-
         return new DeferredRestAction<>(jda, GuildVoiceState.class,
-                () -> {
+                () ->
+                {
                     MemberImpl member = (MemberImpl) getMember(user);
                     return member == null ? null : member.getVoiceState();
                 },
-                () -> {
+                () ->
+                {
                     Route.CompiledRoute route = Route.Guilds.GET_VOICE_STATE.compile(getId(), user.getId());
-
-                    return new RestActionImpl<>(jda, route, (response, request) -> {
+                    return new RestActionImpl<>(jda, route, (response, request) ->
+                    {
                         EntityBuilder entityBuilder = jda.getEntityBuilder();
                         DataObject voiceStateData = response.getObject();
-
-                        MemberImpl member = (MemberImpl) getMember(user);
-                        if (member == null)
-                        {
-                            //Creates voice state if VOICE_STATE cache flag is set
-                            member = entityBuilder.createMember(this, voiceStateData.getObject("member"), voiceStateData, null);
-                            entityBuilder.updateMemberCache(member);
-                        }
-                        //Can be nonnull if cache is on but useCache(false) is used
-                        GuildVoiceState voiceState = member.getVoiceState();
-                        return voiceState == null ? entityBuilder.createGuildVoiceState(member, voiceStateData) : voiceState;
+                        //Creates voice state if VOICE_STATE cache flag is set
+                        MemberImpl member = entityBuilder.createMember(this, voiceStateData.getObject("member"), voiceStateData, null);
+                        entityBuilder.updateMemberCache(member);
+                        return entityBuilder.createGuildVoiceState(member, voiceStateData);
                     });
                 }).useCache(jda.isIntent(GatewayIntent.GUILD_MEMBERS) && jda.isIntent(GatewayIntent.GUILD_VOICE_STATES));
     }
@@ -1223,13 +1227,16 @@ public class GuildImpl implements Guild
         if (isLoaded())
         {
             memberCache.forEachUnordered(callback);
-            return new GatewayTask<>(CompletableFuture.completedFuture(null), () -> {});
+            return new GatewayTask<>(CompletableFuture.completedFuture(null), () ->
+            {
+            });
         }
 
         MemberChunkManager chunkManager = getJDA().getClient().getChunkManager();
         boolean includePresences = getJDA().isIntent(GatewayIntent.GUILD_PRESENCES);
         MemberChunkManager.ChunkRequest handler = chunkManager.chunkGuild(this, includePresences, (last, list) -> list.forEach(callback));
-        handler.exceptionally(ex -> {
+        handler.exceptionally(ex ->
+        {
             WebSocketClient.LOG.error("Encountered exception trying to handle member chunk response", ex);
             return null;
         });
@@ -1243,11 +1250,13 @@ public class GuildImpl implements Guild
         JDAImpl jda = getJDA();
         return new DeferredRestAction<>(jda, Member.class,
                 () -> getMemberById(id),
-                () -> {
+                () ->
+                {
                     if (id == jda.getSelfUser().getIdLong())
                         return new CompletedRestAction<>(jda, getSelfMember());
                     Route.CompiledRoute route = Route.Guilds.GET_MEMBER.compile(getId(), Long.toUnsignedString(id));
-                    return new RestActionImpl<>(jda, route, (resp, req) -> {
+                    return new RestActionImpl<>(jda, route, (resp, req) ->
+                    {
                         MemberImpl member = jda.getEntityBuilder().createMember(this, resp.getObject());
                         jda.getEntityBuilder().updateMemberCache(member);
                         return member;
@@ -1264,18 +1273,22 @@ public class GuildImpl implements Guild
                 "Cannot retrieve presences of members without GUILD_PRESENCES intent!");
 
         if (ids.length == 0)
-            return new GatewayTask<>(CompletableFuture.completedFuture(Collections.emptyList()), () -> {});
+            return new GatewayTask<>(CompletableFuture.completedFuture(Collections.emptyList()), () ->
+            {
+            });
         Checks.check(ids.length <= 100, "You can only request 100 members at once");
         MemberChunkManager chunkManager = api.getClient().getChunkManager();
         List<Member> collect = new ArrayList<>(ids.length);
         CompletableFuture<List<Member>> result = new CompletableFuture<>();
-        MemberChunkManager.ChunkRequest handle = chunkManager.chunkGuild(this, includePresence, ids, (last, list) -> {
+        MemberChunkManager.ChunkRequest handle = chunkManager.chunkGuild(this, includePresence, ids, (last, list) ->
+        {
             collect.addAll(list);
             if (last)
                 result.complete(collect);
         });
 
-        handle.exceptionally(ex -> {
+        handle.exceptionally(ex ->
+        {
             WebSocketClient.LOG.error("Encountered exception trying to handle member chunk response", ex);
             result.completeExceptionally(ex);
             return null;
@@ -1296,13 +1309,15 @@ public class GuildImpl implements Guild
 
         List<Member> collect = new ArrayList<>(limit);
         CompletableFuture<List<Member>> result = new CompletableFuture<>();
-        MemberChunkManager.ChunkRequest handle = chunkManager.chunkGuild(this, prefix, limit, (last, list) -> {
+        MemberChunkManager.ChunkRequest handle = chunkManager.chunkGuild(this, prefix, limit, (last, list) ->
+        {
             collect.addAll(list);
             if (last)
                 result.complete(collect);
         });
 
-        handle.exceptionally(ex -> {
+        handle.exceptionally(ex ->
+        {
             WebSocketClient.LOG.error("Encountered exception trying to handle member chunk response", ex);
             result.completeExceptionally(ex);
             return null;
@@ -1475,11 +1490,11 @@ public class GuildImpl implements Guild
             throw new InsufficientPermissionException(channel, Permission.VOICE_MOVE_OTHERS, "This account does not have Permission to MOVE_OTHERS out of the channel that the Member is currently in.");
 
         if (audioChannel != null
-            && !selfMember.hasPermission(audioChannel, Permission.VOICE_CONNECT)
-            && !member.hasPermission(audioChannel, Permission.VOICE_CONNECT))
+                && !selfMember.hasPermission(audioChannel, Permission.VOICE_CONNECT)
+                && !member.hasPermission(audioChannel, Permission.VOICE_CONNECT))
             throw new InsufficientPermissionException(audioChannel, Permission.VOICE_CONNECT,
-                                                      "Neither this account nor the Member that is attempting to be moved have the VOICE_CONNECT permission " +
-                                                      "for the destination AudioChannel, so the move cannot be done.");
+                    "Neither this account nor the Member that is attempting to be moved have the VOICE_CONNECT permission " +
+                            "for the destination AudioChannel, so the move cannot be done.");
 
         DataObject body = DataObject.empty().put("channel_id", audioChannel == null ? null : audioChannel.getId());
         Route.CompiledRoute route = Route.Guilds.MODIFY_MEMBER.compile(getId(), member.getUser().getId());
@@ -1505,7 +1520,8 @@ public class GuildImpl implements Guild
         }
 
         JDAImpl jda = getJDA();
-        return new DeferredRestAction<>(jda, () -> {
+        return new DeferredRestAction<>(jda, () ->
+        {
             DataObject body = DataObject.empty().put("nick", nickname == null ? "" : nickname);
 
             Route.CompiledRoute route;
@@ -1602,16 +1618,17 @@ public class GuildImpl implements Guild
                 .put("delete_message_seconds", deletionTime.getSeconds());
         Route.CompiledRoute route = Route.Guilds.BULK_BAN.compile(getId());
 
-        return new AuditableRestActionImpl<>(getJDA(), route, body, (res, req) -> {
+        return new AuditableRestActionImpl<>(getJDA(), route, body, (res, req) ->
+        {
             DataObject responseBody = res.getObject();
             List<UserSnowflake> bannedUsers = responseBody.getArray("banned_users")
-                .stream(DataArray::getLong)
-                .map(UserSnowflake::fromId)
-                .collect(Collectors.toList());
+                    .stream(DataArray::getLong)
+                    .map(UserSnowflake::fromId)
+                    .collect(Collectors.toList());
             List<UserSnowflake> failedUsers = responseBody.getArray("failed_users")
-                .stream(DataArray::getLong)
-                .map(UserSnowflake::fromId)
-                .collect(Collectors.toList());
+                    .stream(DataArray::getLong)
+                    .map(UserSnowflake::fromId)
+                    .collect(Collectors.toList());
             return new BulkBanResponse(bannedUsers, failedUsers);
         });
     }
@@ -1774,7 +1791,7 @@ public class GuildImpl implements Guild
         });
 
         Checks.check(!roles.contains(getPublicRole()),
-             "Cannot add the PublicRole of a Guild to a Member. All members have this role by default!");
+                "Cannot add the PublicRole of a Guild to a Member. All members have this role by default!");
 
         // Return an empty rest action if there were no changes
         final List<Role> memberRoles = member.getRoles();
@@ -1802,7 +1819,7 @@ public class GuildImpl implements Guild
         }
 
         DataObject body = DataObject.empty()
-            .put("roles", roles.stream().map(Role::getId).collect(Collectors.toSet()));
+                .put("roles", roles.stream().map(Role::getId).collect(Collectors.toSet()));
         Route.CompiledRoute route = Route.Guilds.MODIFY_MEMBER.compile(getId(), member.getUser().getId());
 
         return new AuditableRestActionImpl<>(getJDA(), route, body);
@@ -1818,7 +1835,7 @@ public class GuildImpl implements Guild
             throw new PermissionException("The logged in account must be the owner of this Guild to be able to transfer ownership");
 
         Checks.check(!getSelfMember().equals(newOwner),
-                     "The member provided as the newOwner is the currently logged in account. Provide a different member to give ownership to.");
+                "The member provided as the newOwner is the currently logged in account. Provide a different member to give ownership to.");
 
         Checks.check(!newOwner.getUser().isBot(), "Cannot transfer ownership of a Guild to a Bot!");
 
@@ -1944,18 +1961,18 @@ public class GuildImpl implements Guild
         MediaType mediaType;
         switch (extension)
         {
-            case "apng":
-            case "png":
-                mediaType = Requester.MEDIA_TYPE_PNG;
-                break;
-            case "gif":
-                mediaType = Requester.MEDIA_TYPE_GIF;
-                break;
-            case "json":
-                mediaType = Requester.MEDIA_TYPE_JSON;
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported file extension: '." + extension + "', must be PNG, GIF, or JSON.");
+        case "apng":
+        case "png":
+            mediaType = Requester.MEDIA_TYPE_PNG;
+            break;
+        case "gif":
+            mediaType = Requester.MEDIA_TYPE_GIF;
+            break;
+        case "json":
+            mediaType = Requester.MEDIA_TYPE_JSON;
+            break;
+        default:
+            throw new IllegalArgumentException("Unsupported file extension: '." + extension + "', must be PNG, GIF, or JSON.");
         }
 
         // Add sticker metadata as form parts (because payload_json is broken)
@@ -1970,7 +1987,7 @@ public class GuildImpl implements Guild
         MultipartBody body = builder.build();
         Route.CompiledRoute route = Route.Stickers.CREATE_GUILD_STICKER.compile(getId());
         return new AuditableRestActionImpl<>(api, route, body,
-            (response, request) -> (GuildSticker) api.getEntityBuilder().createRichSticker(response.getObject())
+                (response, request) -> (GuildSticker) api.getEntityBuilder().createRichSticker(response.getObject())
         );
     }
 
@@ -2053,13 +2070,13 @@ public class GuildImpl implements Guild
     protected void checkPosition(UserSnowflake user)
     {
         Member member = resolveMember(user);
-        if(member != null && !getSelfMember().canInteract(member))
+        if (member != null && !getSelfMember().canInteract(member))
             throw new HierarchyException("Can't modify a member with higher or equal highest role than yourself!");
     }
 
     protected void checkPosition(Role role)
     {
-        if(!getSelfMember().canInteract(role))
+        if (!getSelfMember().canInteract(role))
             throw new HierarchyException("Can't modify a role with higher or equal highest role than yourself! Role: " + role.toString());
     }
 
