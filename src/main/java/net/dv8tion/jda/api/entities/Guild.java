@@ -2596,7 +2596,7 @@ public interface Guild extends IGuildChannelContainer<GuildChannel>, ISnowflake
      * <p>Possible {@link net.dv8tion.jda.api.exceptions.ErrorResponseException ErrorResponseExceptions} include:
      * <ul>
      *     <li>{@link net.dv8tion.jda.api.requests.ErrorResponse#UNKNOWN_VOICE_STATE}
-     *     <br>The specified user is not a member of this guild</li>
+     *     <br>The specified user does not exist, is not a member of this guild or is not connected to a voice channel</li>
      * </ul>
      *
      * @param  id
@@ -2619,7 +2619,7 @@ public interface Guild extends IGuildChannelContainer<GuildChannel>, ISnowflake
      * <p>Possible {@link net.dv8tion.jda.api.exceptions.ErrorResponseException ErrorResponseExceptions} include:
      * <ul>
      *     <li>{@link net.dv8tion.jda.api.requests.ErrorResponse#UNKNOWN_VOICE_STATE}
-     *     <br>The specified user is not a member of this guild</li>
+     *     <br>The specified user does not exist, is not a member of this guild or is not connected to a voice channel</li>
      * </ul>
      *
      * @param  id
@@ -2650,7 +2650,7 @@ public interface Guild extends IGuildChannelContainer<GuildChannel>, ISnowflake
      * <p>Possible {@link net.dv8tion.jda.api.exceptions.ErrorResponseException ErrorResponseExceptions} include:
      * <ul>
      *     <li>{@link net.dv8tion.jda.api.requests.ErrorResponse#UNKNOWN_VOICE_STATE}
-     *     <br>The specified user is not a member of this guild</li>
+     *     <br>The specified user does not exist, is not a member of this guild or is not connected to a voice channel</li>
      * </ul>
      *
      * @param  user
