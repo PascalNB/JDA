@@ -1440,7 +1440,7 @@ public interface Guild extends IGuildChannelContainer<GuildChannel>, ISnowflake
      */
     @Nonnull
     SortedSnowflakeCacheView<ScheduledEvent> getScheduledEventCache();
-    
+
     /**
      * Gets a list of all {@link ScheduledEvent ScheduledEvents} in this Guild that have the same
      * name as the one provided.
@@ -1465,7 +1465,7 @@ public interface Guild extends IGuildChannelContainer<GuildChannel>, ISnowflake
     {
         return getScheduledEventCache().getElementsByName(name, ignoreCase);
     }
-    
+
     /**
      * Gets a {@link ScheduledEvent} from this guild that has the same id as the
      * one provided. This method is similar to {@link JDA#getScheduledEventById(String)}, but it only
@@ -1488,7 +1488,7 @@ public interface Guild extends IGuildChannelContainer<GuildChannel>, ISnowflake
     {
         return getScheduledEventCache().getElementById(id);
     }
-    
+
     /**
      * Gets a {@link ScheduledEvent} from this guild that has the same id as the
      * one provided. This method is similar to {@link JDA#getScheduledEventById(long)}, but it only
@@ -1508,7 +1508,7 @@ public interface Guild extends IGuildChannelContainer<GuildChannel>, ISnowflake
     {
         return getScheduledEventCache().getElementById(id);
     }
-    
+
     /**
      * Gets all {@link ScheduledEvent ScheduledEvents} in this guild.
      * <br>Scheduled events are sorted by their start time, and events that start at the same time
@@ -2584,8 +2584,99 @@ public interface Guild extends IGuildChannelContainer<GuildChannel>, ISnowflake
     @Nonnull
     List<GuildVoiceState> getVoiceStates();
 
+    /**
+     * Load the member's voice state for the specified user.
+     * <br>If the member is already loaded it will be retrieved from {@link #getMemberById(long)} and
+     * the voice state is immediately provided by {@link Member#getVoiceState()}.
+     * The cache consistency directly relies on the enabled {@link GatewayIntent GatewayIntents} as {@link GatewayIntent#GUILD_MEMBERS GatewayIntent.GUILD_MEMBERS}
+     * and {@link GatewayIntent#GUILD_VOICE_STATES GatewayIntent.GUILD_VOICE_STATES} are required to keep the cache updated with the latest information.
+     * You can use {@link CacheRestAction#useCache(boolean) useCache(false)} to always
+     * make a new request, which is the default behavior if the required intents are disabled.
+     *
+     * <p>Possible {@link net.dv8tion.jda.api.exceptions.ErrorResponseException ErrorResponseExceptions} include:
+     * <ul>
+     *     <li>{@link net.dv8tion.jda.api.requests.ErrorResponse#UNKNOWN_VOICE_STATE}
+     *     <br>The specified user is not a member of this guild</li>
+     *
+     *     <li>{@link net.dv8tion.jda.api.requests.ErrorResponse#UNKNOWN_USER}
+     *     <br>The specified user does not exist</li>
+     * </ul>
+     *
+     * @param  id
+     *         The user id to load the voice state from
+     *
+     * @return {@link RestAction} - Type: {@link GuildVoiceState}
+     */
     @Nonnull
-    RestAction<GuildVoiceState> retrieveMemberVoiceState(@Nonnull UserSnowflake user);
+    CacheRestAction<GuildVoiceState> retrieveMemberVoiceStateById(long id);
+
+    /**
+     * Load the member's voice state for the specified user.
+     * <br>If the member is already loaded it will be retrieved from {@link #getMemberById(long)} and
+     * the voice state is immediately provided by {@link Member#getVoiceState()}.
+     * The cache consistency directly relies on the enabled {@link GatewayIntent GatewayIntents} as {@link GatewayIntent#GUILD_MEMBERS GatewayIntent.GUILD_MEMBERS}
+     * and {@link GatewayIntent#GUILD_VOICE_STATES GatewayIntent.GUILD_VOICE_STATES} are required to keep the cache updated with the latest information.
+     * You can use {@link CacheRestAction#useCache(boolean) useCache(false)} to always
+     * make a new request, which is the default behavior if the required intents are disabled.
+     *
+     * <p>Possible {@link net.dv8tion.jda.api.exceptions.ErrorResponseException ErrorResponseExceptions} include:
+     * <ul>
+     *     <li>{@link net.dv8tion.jda.api.requests.ErrorResponse#UNKNOWN_VOICE_STATE}
+     *     <br>The specified user is not a member of this guild</li>
+     *
+     *     <li>{@link net.dv8tion.jda.api.requests.ErrorResponse#UNKNOWN_USER}
+     *     <br>The specified user does not exist</li>
+     * </ul>
+     *
+     * @param  id
+     *         The user id to load the voice state from
+     *
+     * @throws IllegalArgumentException
+     *         If the provided id is empty or null
+     * @throws NumberFormatException
+     *         If the provided id is not a snowflake
+     *
+     * @return {@link RestAction} - Type: {@link GuildVoiceState}
+     */
+    @Nonnull
+    default CacheRestAction<GuildVoiceState> retrieveMemberVoiceStateById(@Nonnull String id)
+    {
+        return retrieveMemberVoiceStateById(MiscUtil.parseSnowflake(id));
+    }
+
+    /**
+     * Load the member's voice state for the specified {@link UserSnowflake}.
+     * <br>If the member is already loaded it will be retrieved from {@link #getMemberById(long)} and
+     * the voice state is immediately provided by {@link Member#getVoiceState()}.
+     * The cache consistency directly relies on the enabled {@link GatewayIntent GatewayIntents} as {@link GatewayIntent#GUILD_MEMBERS GatewayIntent.GUILD_MEMBERS}
+     * and {@link GatewayIntent#GUILD_VOICE_STATES GatewayIntent.GUILD_VOICE_STATES} are required to keep the cache updated with the latest information.
+     * You can use {@link CacheRestAction#useCache(boolean) useCache(false)} to always
+     * make a new request, which is the default behavior if the required intents are disabled.
+     *
+     * <p>Possible {@link net.dv8tion.jda.api.exceptions.ErrorResponseException ErrorResponseExceptions} include:
+     * <ul>
+     *     <li>{@link net.dv8tion.jda.api.requests.ErrorResponse#UNKNOWN_VOICE_STATE}
+     *     <br>The specified user is not a member of this guild</li>
+     *
+     *     <li>{@link net.dv8tion.jda.api.requests.ErrorResponse#UNKNOWN_USER}
+     *     <br>The specified user does not exist</li>
+     * </ul>
+     *
+     * @param  user
+     *         The {@link UserSnowflake} for the member's voice state to retrieve.
+     *         This can be a member or user instance or {@link User#fromId(long)}.
+     *
+     * @throws IllegalArgumentException
+     *         If the provided with null
+     *
+     * @return {@link RestAction} - Type: {@link GuildVoiceState}
+     */
+    @Nonnull
+    default CacheRestAction<GuildVoiceState> retrieveMemberVoiceState(UserSnowflake user)
+    {
+        Checks.notNull(user, "User");
+        return retrieveMemberVoiceStateById(user.getId());
+    }
 
     /**
      * Returns the verification-Level of this Guild. Verification level is one of the factors that determines if a Member

@@ -57,6 +57,7 @@ import net.dv8tion.jda.api.requests.restaction.order.ChannelOrderAction;
 import net.dv8tion.jda.api.requests.restaction.order.RoleOrderAction;
 import net.dv8tion.jda.api.requests.restaction.pagination.AuditLogPaginationAction;
 import net.dv8tion.jda.api.utils.FileUpload;
+import net.dv8tion.jda.api.utils.MiscUtil;
 import net.dv8tion.jda.api.utils.cache.*;
 import net.dv8tion.jda.api.utils.concurrent.Task;
 import net.dv8tion.jda.api.utils.data.DataArray;
@@ -1165,18 +1166,18 @@ public class GuildImpl implements Guild
 
     @Nonnull
     @Override
-    public CacheRestAction<GuildVoiceState> retrieveMemberVoiceState(@Nonnull UserSnowflake user)
+    public CacheRestAction<GuildVoiceState> retrieveMemberVoiceStateById(long id)
     {
         JDAImpl jda = getJDA();
         return new DeferredRestAction<>(jda, GuildVoiceState.class,
                 () ->
                 {
-                    MemberImpl member = (MemberImpl) getMember(user);
+                    MemberImpl member = (MemberImpl) getMemberById(id);
                     return member == null ? null : member.getVoiceState();
                 },
                 () ->
                 {
-                    Route.CompiledRoute route = Route.Guilds.GET_VOICE_STATE.compile(getId(), user.getId());
+                    Route.CompiledRoute route = Route.Guilds.GET_VOICE_STATE.compile(getId(), Long.toUnsignedString(id));
                     return new RestActionImpl<>(jda, route, (response, request) ->
                     {
                         EntityBuilder entityBuilder = jda.getEntityBuilder();
