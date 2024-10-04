@@ -43,6 +43,7 @@ import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.entities.emoji.EmojiUnion;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.entities.messages.MessagePoll;
+import net.dv8tion.jda.api.entities.messages.MessageSnapshot;
 import net.dv8tion.jda.api.entities.sticker.*;
 import net.dv8tion.jda.api.entities.templates.Template;
 import net.dv8tion.jda.api.entities.templates.TemplateChannel;
@@ -55,6 +56,7 @@ import net.dv8tion.jda.api.events.user.update.*;
 import net.dv8tion.jda.api.exceptions.ParsingException;
 import net.dv8tion.jda.api.interactions.DiscordLocale;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.LayoutComponent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import net.dv8tion.jda.api.utils.cache.CacheView;
 import net.dv8tion.jda.api.utils.data.DataArray;
@@ -1833,18 +1835,24 @@ public class EntityBuilder
             }
         }
 
+        List<MessageSnapshot> snapshots = Collections.emptyList();
         MessageReference messageReference = null;
         if (!jsonObject.isNull("message_reference")) // always contains the channel + message id for a referenced message
         {                                                // used for when referenced_message is not provided
             DataObject messageReferenceJson = jsonObject.getObject("message_reference");
 
             messageReference = new MessageReference(
+                    messageReferenceJson.getInt("type", -1),
                     messageReferenceJson.getLong("message_id", 0),
                     messageReferenceJson.getLong("channel_id", 0),
                     messageReferenceJson.getLong("guild_id", 0),
                     referencedMessage,
                     api
             );
+
+
+            MessageReference finalReference = messageReference;
+            snapshots = map(jsonObject, "message_snapshots", (obj) -> createMessageSnapshot(finalReference, obj.getObject("message")));
         }
 
         MessagePoll poll = jsonObject.optObject("poll").map(EntityBuilder::createMessagePoll).orElse(null);
@@ -1879,8 +1887,8 @@ public class EntityBuilder
         int position = jsonObject.getInt("position", -1);
 
         return new ReceivedMessage(id, channelId, guildId, api, guild, channel, type, messageReference, fromWebhook, applicationId, tts, pinned,
-                content, nonce, user, member, activity, poll, editTime, mentions, reactions, attachments, embeds, stickers, components, flags,
-                messageInteraction, startedThread, position);
+                content, nonce, user, member, activity, poll, editTime, mentions, reactions, attachments, embeds, stickers, components, snapshots,
+                flags, messageInteraction, startedThread, position);
     }
 
     private static MessageActivity createMessageActivity(DataObject jsonObject)
@@ -2185,6 +2193,45 @@ public class EntityBuilder
         }
 
         return new Message.Interaction(id, type, name, user, member);
+    }
+
+    public MessageSnapshot createMessageSnapshot(MessageReference messageReference, DataObject jsonObject)
+    {
+        MessageType type = MessageType.fromId(jsonObject.getInt("type"));
+
+        String content = jsonObject.getString("content", "");
+        OffsetDateTime editTime = jsonObject.isNull("edited_timestamp") ? null : OffsetDateTime.parse(jsonObject.getString("edited_timestamp"));
+        int flags = jsonObject.getInt("flags", 0);
+        boolean mentionsEveryone = jsonObject.getBoolean("mention_everyone");
+
+        List<Message.Attachment> attachments = map(jsonObject, "attachments",   this::createMessageAttachment);
+        List<MessageEmbed>       embeds      = map(jsonObject, "embeds",        this::createMessageEmbed);
+        List<StickerItem>        stickers    = map(jsonObject, "sticker_items", this::createStickerItem);
+
+        // Message Components
+        List<LayoutComponent> components = Collections.emptyList();
+        Optional<DataArray> componentsArrayOpt = jsonObject.optArray("components");
+        if (componentsArrayOpt.isPresent())
+        {
+            DataArray array = componentsArrayOpt.get();
+            components = array.stream(DataArray::getObject)
+                    .filter(it -> it.getInt("type", 0) == 1)
+                    .map(ActionRow::fromData)
+                    .collect(Collectors.toList());
+        }
+
+        Guild guild = messageReference.getGuild();
+        // Lazy Mention parsing and caching (includes reply mentions)
+        // This only works if the message is from the same guild
+        Mentions mentions = new MessageMentionsImpl(
+            api, guild instanceof GuildImpl ? (GuildImpl) guild : null, content, mentionsEveryone,
+            jsonObject.getArray("mentions"),
+            jsonObject.optArray("mention_roles").orElseGet(DataArray::empty)
+        );
+
+        return new MessageSnapshot(
+            type, mentions, editTime, content, attachments, embeds, components, stickers, flags
+        );
     }
 
     @Nullable
@@ -2646,9 +2693,16 @@ public class EntityBuilder
         for (int i = 0; i < arr.length(); i++)
         {
             DataObject obj = arr.getObject(i);
-            T result = convert.apply(obj);
-            if (result != null)
-                mappedObjects.add(result);
+            try
+            {
+                T result = convert.apply(obj);
+                if (result != null)
+                    mappedObjects.add(result);
+            }
+            catch (Exception e)
+            {
+                LOG.error("Failed to parse element in {} with content {}", key, obj, e);
+            }
         }
 
         return mappedObjects;

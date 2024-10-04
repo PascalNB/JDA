@@ -30,6 +30,7 @@ import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.entities.messages.MessagePoll;
+import net.dv8tion.jda.api.entities.messages.MessageSnapshot;
 import net.dv8tion.jda.api.entities.sticker.GuildSticker;
 import net.dv8tion.jda.api.entities.sticker.Sticker;
 import net.dv8tion.jda.api.entities.sticker.StickerItem;
@@ -820,6 +821,19 @@ public interface Message extends ISnowflake, Formattable
     @Nonnull
     @Unmodifiable
     List<StickerItem> getStickers();
+
+    /**
+     * The {@link MessageSnapshot MessageSnaphots} attached to this message.
+     *
+     * <p>This is used primarily for message forwarding.
+     * The content of the forwarded message is provided as a snapshot at the time of forwarding.
+     * When the message is edited or deleted, this snapshot remains unchanged.
+     *
+     * @return Immutable {@link List} of {@link MessageSnapshot}
+     */
+    @Nonnull
+    @Unmodifiable
+    List<MessageSnapshot> getMessageSnapshots();
 
     /**
      * Defines whether or not this Message triggers TTS (Text-To-Speech).
